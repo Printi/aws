@@ -1,0 +1,26 @@
+{
+  "name": "tanujdave/aws",
+  "type": "symfony-bundle",
+  "description": "Notify is messaging service for Omega2. which responsible for sending message to Alpha or AWS sns based on priority.",
+  "keywords": ["messaging", "notify", "transition", "api"],
+  "homepage": "https://github.com/Printi/aws",
+  "license": "MIT",
+  "minimum-stability": "dev",
+  "authors": [
+    {
+      "name": "Tanuj Dave",
+      "email": "tanuj.dave@printi.com.br"
+    }
+  ],
+  "autoload": {
+    "psr-4": {
+      "Printi\\AwsBundle\\": "src/"
+    }
+  },
+  "require": {
+    "php": "^7.0",
+    "symfony/framework-bundle": "^3.3",
+    "aws/aws-sdk-php-symfony": "^2.0",
+    "symfony/monolog-bundle": "^3.1"
+  }
+}
