@@ -1,5 +1,5 @@
 {
-  "name": "tanujdave/aws",
+  "name": "printi/aws",
   "type": "symfony-bundle",
   "description": "Notify is messaging service for Omega2. which responsible for sending message to Alpha or AWS sns based on priority.",
   "keywords": ["messaging", "notify", "transition", "api"],
