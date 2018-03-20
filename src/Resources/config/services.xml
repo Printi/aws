@@ -15,6 +15,13 @@
         </service>
         <service id="Printi\AwsBundle\Services\Sns\Sns" alias="printi.aws.sns" />
 
+        <service id="printi.aws.sqs" class="Printi\AwsBundle\Services\Sqs\Sqs">
+            <argument type="service" id="aws.sqs" />
+            <argument>%printi_sqs_config%</argument>
+            <argument type="service" id="monolog.logger" />
+        </service>
+        <service id="Printi\AwsBundle\Services\Sqs\Sqs" alias="printi.aws.sqs" />
+
         <service id="printi.aws.s3" class="Printi\AwsBundle\Services\S3\S3">
             <argument type="service" id="aws.s3" />
             <argument>%printi_s3_config%</argument>

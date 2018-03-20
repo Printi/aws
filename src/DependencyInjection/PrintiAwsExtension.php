@@ -29,6 +29,10 @@ class PrintiAwsExtension extends Extension
                 $container->setParameter('printi_sns_config', $config['sns']);
             }
 
+            if (isset($config['sqs'])) {
+                $container->setParameter('printi_sqs_config', $config['sqs']);
+            }
+
             if (isset($config['s3'])) {
                 $container->setParameter('printi_s3_config', $config['s3']);
             }
