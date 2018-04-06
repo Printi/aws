@@ -59,7 +59,7 @@ printi_aws:
         alpha_message:
             enable: true
             topic_arn: arn:aws:sns:sa-east-1:773571409125:om2-invalid-item-import-dev```                        
-
+```
 
 ## How to use
 
