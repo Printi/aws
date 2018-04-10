@@ -41,7 +41,7 @@ class S3
     public function signFileUrl(string $objectUrl, string $bucket, string $expirationTime = '+10 minutes'): string
     {
 
-        if (!isset($this->awsConfig[$bucket]['bucket'])) {
+        if (!isset($this->s3Config[$bucket]['bucket'])) {
             throw new S3Exception(S3Exception::TYPE_S3_BUCKET_CONFIG_NOT_FOUND);
         }
 
@@ -71,7 +71,7 @@ class S3
      */
     public function moveTempToFinal(int $orderItemId, string $url, string $bucket)
     {
-        if (!isset($this->awsConfig[$bucket]['bucket'])) {
+        if (!isset($this->s3Config[$bucket]['bucket'])) {
             throw new S3Exception(S3Exception::TYPE_S3_BUCKET_CONFIG_NOT_FOUND);
         }
 
