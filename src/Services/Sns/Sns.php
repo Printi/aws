@@ -49,7 +49,7 @@ class Sns
 
         $message = json_encode(
             [
-                'default' => 'Omega message',
+                'default' => $messageBody['error_message'] ?? 'Omega message',
                 'sqs'     => json_encode($messageBody),
             ]
         );
