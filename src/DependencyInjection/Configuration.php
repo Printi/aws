@@ -14,6 +14,17 @@ class Configuration implements ConfigurationInterface
         $root = $builder->root('printi_aws');
         $root
             ->children()
+                ->arrayNode('global')
+                    ->useAttributeAsKey('name')
+                    ->children()
+                        ->scalarNode('version')
+                        ->scalarNode('region')
+                            ->defaultValue('us-east-1')
+                        ->arrayNode('credentials')
+                            ->useAttributeAsKey('name')
+                            ->children()
+                                ->scalarNode('key')
+                                ->scalarNode('secret')
                 ->arrayNode('s3')
                     ->useAttributeAsKey('name')
                     ->prototype('variable')->end()

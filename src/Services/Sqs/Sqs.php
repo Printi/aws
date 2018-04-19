@@ -2,41 +2,15 @@
 
 namespace Printi\AwsBundle\Services\Sqs;
 
-use Aws\Sqs\SqsClient;
+use Printi\AwsBundle\Services\AwsService;
 use Printi\AwsBundle\Services\Sqs\Exception\SqsException;
-use Psr\Log\LoggerInterface;
 
 /**
  * Class Sqs
  */
-class Sqs
+class Sqs extends AwsService
 {
-    /** @var SqsClient $sqsClient */
-    private $sqsClient;
-
-    /** @var LoggerInterface $logger */
-    private $logger;
-
-    /** @var array $sqsConfig */
-    private $sqsConfig;
-
-
-    public function __construct(SqsClient $sqsClient, array $sqsConfig, LoggerInterface $logger)
-    {
-        $this->sqsConfig = $sqsConfig;
-        $this->sqsClient = $sqsClient;
-        $this->logger    = $logger;
-    }
-
-    /**
-     * Send Message on SQS
-     *
-     * @param string $queueReference
-     * @param array  $messageBody The actual body that should be sent (for example an order item info)
-     *
-     * @return \Aws\Result
-     * @throws SqsException
-     */
+    const SERVICE_NAME = "Sqs";
 
     /**
      * Send Message on SQS
@@ -49,41 +23,30 @@ class Sqs
      */
     public function send(string $queueReference, array $messageBody = [])
     {
-        if (!isset($this->sqsConfig[$queueReference])) {
-            throw new SqsException(SqsException::TYPE_SQS_CONFIG_NOT_FOUND);
-        }
+        $queueConfig = $this->getResourceConfig($queueReference);
 
-        if (false === $this->sqsConfig[$queueReference]['enable']) {
+        if (false === $queueConfig['enable']) {
             throw new SqsException(SqsException::TYPE_SQS_CONFIG_DISABLED);
         }
 
         try {
-
             $config = [
-                'QueueUrl'    => $this->sqsConfig[$queueReference]['queue_url'],
+                'QueueUrl'    => $queueConfig['queue_url'],
                 'MessageBody' => json_encode($messageBody),
             ];
 
-            if (isset($this->sqsConfig[$queueReference]['queue_type']) && 'fifo' === $this->sqsConfig[$queueReference]['queue_type']) {
+            $isFifo = (
+                isset($queueConfig['queue_type']) &&
+                'fifo' === $queueConfig['queue_type']
+            );
+
+            if ($isFifo) {
                 $config['MessageGroupId']         = uniqid();
                 $config['MessageDeduplicationId'] = uniqid();
             }
 
-            $result = $this->sqsClient->sendMessage($config);
-            $logMessage = sprintf(
-                "SQS Sending | Payload : %s | Response Status Code : %d",
-                json_encode($messageBody),
-                $result->get('@metadata')['statusCode']
-            );
-            $this->logger->info($logMessage);
+            $result = $this->getClient($queueReference)->sendMessage($config);
         } catch (\Exception $e) {
-            $logMessage = sprintf(
-                "SQS Sending | Payload : %s | Error : %s",
-                json_encode($messageBody),
-                $e->getMessage()
-            );
-            $this->logger->error($logMessage);
-
             throw new SqsException(SqsException::TYPE_SQS_SENDING_FAILED);
         }
 

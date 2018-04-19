@@ -1,0 +1,25 @@
+# parameters:
+#     locale: 'en'
+services:
+    _defaults:
+        autowire: true
+        autoconfigure: true
+        public: false
+
+    printi.aws.sns:
+        class: Printi\AwsBundle\Services\Sns\Sns
+        arguments:
+            - "%config_global%"
+            - "%config_sns%"
+
+    printi.aws.sqs:
+        class: Printi\AwsBundle\Services\Sqs\Sqs
+        arguments:
+            - "%config_global%"
+            - "%config_sqs%"
+
+    printi.aws.s3:
+        class: Printi\AwsBundle\Services\S3\S3
+        arguments:
+            - "%config_global%"
+            - "%config_s3%"
