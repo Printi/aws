@@ -11,8 +11,6 @@ use Printi\AwsBundle\Services\Sns\Exception\SnsException;
  */
 class Sns extends AwsService
 {
-    const SERVICE_NAME = "Sns";
-
     /**
      * Publishes a notification to Aws SNS
      *

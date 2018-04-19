@@ -10,8 +10,6 @@ use Printi\AwsBundle\Services\Sqs\Exception\SqsException;
  */
 class Sqs extends AwsService
 {
-    const SERVICE_NAME = "Sqs";
-
     /**
      * Send Message on SQS
      *

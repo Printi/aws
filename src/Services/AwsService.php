@@ -10,18 +10,22 @@ use Aws\Exception\AwsException;
  */
 abstract class AwsService
 {
-    const SERVICE_NAME = "Aws";
-
-    /** @var array $s3Config */
+    /** @var array $globalConfig */
     private $globalConfig;
 
-    /** @var array $s3Config */
+    /** @var array $config */
     private $config;
+
+    /** @var string $service */
+    private $service;
 
     public function __construct(array $globalConfig, array $config)
     {
         $this->globalConfig = $globalConfig;
         $this->config       = $config;
+
+        $path = explode('\\', get_class($this));
+        $this->service = array_pop($path);
     }
 
     /**
@@ -34,17 +38,17 @@ abstract class AwsService
      *
      * @return AwsClient  An instance of the desired AWS client
      */
-    private function getClient(string $key): AwsClient
+    protected function getClient(string $key): AwsClient
     {
         static $client;
 
-        $clientClass = spritnf(
+        $clientClass = sprintf(
             "Aws\\%s\\%sClient",
-            self::SERVICE_NAME,
-            self::SERVICE_NAME
+            $this->service,
+            $this->service
         );
 
-        $resource = $this->getResource($key);
+        $resource = $this->getResourceConfig($key);
         $region   = $resource['region'] ?? $this->globalConfig['region'];
 
         $shouldInstanciate = (
@@ -71,12 +75,12 @@ abstract class AwsService
      * @throws AwsException
      * @return array      The resource config array
      */
-    private function getResourceConfig(string $key): array
+    protected function getResourceConfig(string $key): array
     {
         if (!is_array($this->config[$key]) || empty($this->config[$key])) {
             throw new AwsException(sprintf(
                 "Config for [%s]:[%s] not found.",
-                self::SERVICE_NAME,
+                $this->service,
                 $key
             ));
         }

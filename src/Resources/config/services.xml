@@ -9,23 +9,26 @@
         <defaults autowire="true" autoconfigure="true" public="false" />
 
         <service id="printi.aws.sns" class="Printi\AwsBundle\Services\Sns\Sns">
-            <argument type="service" id="aws.sns" />
-            <argument>%printi_sns_config%</argument>
-            <argument type="service" id="monolog.logger" />
+            <!-- <argument type="service" id="aws.sns" /> -->
+            <argument>%config_global%</argument>
+            <argument>%config_sns%</argument>
+            <!-- <argument type="service" id="monolog.logger" /> -->
         </service>
         <service id="Printi\AwsBundle\Services\Sns\Sns" alias="printi.aws.sns" />
 
         <service id="printi.aws.sqs" class="Printi\AwsBundle\Services\Sqs\Sqs">
-            <argument type="service" id="aws.sqs" />
-            <argument>%printi_sqs_config%</argument>
-            <argument type="service" id="monolog.logger" />
+            <!-- <argument type="service" id="aws.sqs" /> -->
+            <argument>%config_global%</argument>
+            <argument>%config_sqs%</argument>
+            <!-- <argument type="service" id="monolog.logger" /> -->
         </service>
         <service id="Printi\AwsBundle\Services\Sqs\Sqs" alias="printi.aws.sqs" />
 
         <service id="printi.aws.s3" class="Printi\AwsBundle\Services\S3\S3">
-            <argument type="service" id="aws.s3" />
-            <argument>%printi_s3_config%</argument>
-            <argument type="service" id="monolog.logger" />
+            <!-- <argument type="service" id="aws.s3" /> -->
+            <argument>%config_global%</argument>
+            <argument>%config_s3%</argument>
+            <!-- <argument type="service" id="monolog.logger" /> -->
         </service>
         <service id="Printi\AwsBundle\Services\S3\S3" alias="printi.aws.s3" />
 

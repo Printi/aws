@@ -11,8 +11,6 @@ use Printi\AwsBundle\Services\S3\Exception\S3Exception;
  */
 class S3 extends AwsService
 {
-    const SERVICE_NAME = "S3";
-
     /**
      * Download Pdf file from S3 bucket
      *
@@ -25,7 +23,7 @@ class S3 extends AwsService
      */
     public function signFileUrl(string $objectUrl, string $bucket, string $expiration = '+10 minutes'): string
     {
-        $bucketName = $this->getResourceConfig($bucket)['name'];
+        $bucketName = $this->getResourceConfig($bucket)['bucket'];
         $cmdParams  = [
             'Bucket' => $bucketName,
             'Key'    => $this->getS3KeyFromObjectUrl(
@@ -35,7 +33,7 @@ class S3 extends AwsService
         ];
 
         $cmd     = $this->getClient($bucket)->getCommand('GetObject', $cmdParams);
-        $request = $this->s3Client->createPresignedRequest($cmd, $expiration);
+        $request = $this->getClient($bucket)->createPresignedRequest($cmd, $expiration);
 
         return (string) $request->getUri();
     }
@@ -78,7 +76,7 @@ class S3 extends AwsService
      */
     public function copyFile(string $bucket, string $originPath, string $targetPath)
     {
-        $bucketName = $this->getResourceConfig($bucket)['name'];
+        $bucketName = $this->getResourceConfig($bucket)['bucket'];
         $response   = $this->getClient($bucket)->copyObject([
             'Bucket'     => $bucketName,
             'CopySource' => $originPath,
