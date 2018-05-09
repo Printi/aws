@@ -40,6 +40,10 @@ class Configuration implements ConfigurationInterface
                     ->useAttributeAsKey('name')
                     ->prototype('variable')->end()
                 ->end()
+                ->arrayNode('lambda')
+                    ->useAttributeAsKey('name')
+                    ->prototype('variable')->end()
+                ->end()
             ->end();
 
         return $builder;

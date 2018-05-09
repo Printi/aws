@@ -32,5 +32,13 @@
         </service>
         <service id="Printi\AwsBundle\Services\S3\S3" alias="printi.aws.s3" />
 
+        <service id="printi.aws.lambda" class="Printi\AwsBundle\Services\Lambda\Lambda">
+            <!-- <argument type="service" id="aws.lambda" /> -->
+            <argument>%config_global%</argument>
+            <argument>%config_lambda%</argument>
+            <!-- <argument type="service" id="monolog.logger" /> -->
+        </service>
+        <service id="Printi\AwsBundle\Services\Lambda\Lambda" alias="printi.aws.lambda" />
+
     </services>
 </container>
