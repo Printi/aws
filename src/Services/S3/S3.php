@@ -23,7 +23,7 @@ class S3 extends AwsService
      */
     public function signFileUrl(string $objectUrl, string $bucket, string $expiration = '+10 minutes'): string
     {
-        $bucketName = $this->getResourceConfig($bucket)['bucket'];
+        $bucketName = $this->getS3BucketName($bucket);
         $cmdParams  = [
             'Bucket' => $bucketName,
             'Key'    => $this->getS3KeyFromObjectUrl(
@@ -76,7 +76,7 @@ class S3 extends AwsService
      */
     public function copyFile(string $bucket, string $originPath, string $targetPath)
     {
-        $bucketName = $this->getResourceConfig($bucket)['bucket'];
+        $bucketName = $this->getS3BucketName($bucket);
         $response   = $this->getClient($bucket)->copyObject([
             'Bucket'     => $bucketName,
             'CopySource' => $originPath,
@@ -84,6 +84,18 @@ class S3 extends AwsService
         ]);
 
         return $response['ObjectURL'] ?? '';
+    }
+
+    /**
+     * Get s3 bucket name by reference
+     *
+     * @param string $bucketReference
+     *
+     * @return string
+     */
+    public function getS3BucketName(string $bucketReference):string
+    {
+        return $this->getResourceConfig($bucketReference)['bucket'];
     }
 
     /**
