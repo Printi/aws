@@ -99,6 +99,20 @@ class S3 extends AwsService
     }
 
     /**
+     * Get s3 bucket file url
+     *
+     * @param string $bucketReference
+     * @param string $key
+     *
+     * @return string
+     */
+    public function getS3BucketFileUrl(string $bucketReference, string $key):string
+    {
+        $bucketName = $this->getS3BucketName($bucketReference);
+        return $this->getClient($bucketReference)->getObjectUrl($bucketName, $key);
+    }
+
+    /**
      * Retrieve S3 key url from a full S3 url
      * Looks like we can have 2 kind of urls
      *      https://alpha-upload-dev.s3-sa-east-1.amazonaws.com/briefing/800301/800480/800301_800480_14072017_1344_3.pdf
