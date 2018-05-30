@@ -30,8 +30,9 @@ class Lambda extends AwsService
 
         try {
             $config = [
-                'FunctionName' => $lambdaConfig['function_name'],
-                'Payload'      => json_encode($payload)
+                'FunctionName'   => $lambdaConfig['function_name'],
+                'InvocationType' => 'Event',    // for asynchronous lambda call
+                'Payload'        => json_encode($payload),
             ];
 
             $result = $this->getClient($lambdaReference)->invoke($config);
