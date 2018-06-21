@@ -2,7 +2,6 @@
 
 namespace Printi\AwsBundle\Services\S3;
 
-use Aws\S3\S3Client;
 use Printi\AwsBundle\Services\AwsService;
 use Printi\AwsBundle\Services\S3\Exception\S3Exception;
 
@@ -50,19 +49,138 @@ class S3 extends AwsService
      */
     public function moveTempToFinal(int $orderItemId, string $url, string $bucket)
     {
-        $objectUrl = false;
+        /**
+         * If the file is already on our `connected_files` folder, we can just
+         * return the provided URL as it's already where it should be.
+         */
+        if (preg_match("/(.*)\/upload\/connected_files\/(.*)/", $url, $matches)) {
+            return $url;
+        }
 
-        if (preg_match("/upload\/temp\/(.*)/", $url, $matches)) {
-            $originPath = parse_url($url, PHP_URL_PATH);
+        $objectUrl  = false;
+        $originUrl  = "";
+        $targetPath = $url;
+
+        if (preg_match("/(.*)\/upload\/temp\/(\d*)(.*)/", $url, $matches)) {
+            /**
+             * ! We MUST rebuild the originUrl as well in case we have a /temp/ file
+             * ! because sometimes the URLs sent by alpha won't have a slash after the
+             * ! temp token, resulting in a wrong file path.
+             *
+             * * Here we're *trying* to overcome this issue, although it's not possible
+             * * to have a 100% success rate because:
+             *
+             * * 1. Alpha's "random" folder number is not consistent at all, so we may
+             * *    have some variations in length, therefore we MUST capture 0-N digits
+             * *    after /temp/.
+             *
+             * * 2. If the actual file name begins with a number, this strategy will
+             * *    also fail, because of the rule described above.
+             */
+            $originUrl = sprintf(
+                '%s/upload/temp/%s/%s',
+                $matches[1],
+                $matches[2],
+                basename($matches[3])
+            );
             $targetPath = sprintf(
                 'upload/connected_files/%s/%s',
                 $orderItemId,
-                basename($matches[1])
+                basename($matches[3])
             );
-            $objectUrl = $this->copyFile($bucket, $originPath, $targetPath);
+
+            $targetUrl    = $matches[1] . $targetPath;
+            $originExists = $this->fileExists($bucket, $originUrl);
+            $targetExists = $this->fileExists($bucket, $targetUrl);
+
+            if (!$originExists && $targetExists) {
+                return $targetUrl;
+            }
+
+            if (!$originExists && !$targetExists) {
+                throw new S3Exception(S3Exception::TYPE_FILES_DOESNT_EXIST);
+            }
+
+            return $this->copyFile($bucket, $originUrl, $targetPath);
+        }
+    }
+
+    /**
+     * This method
+     *
+     * @param string $url
+     *
+     * @return bool
+     */
+    public function fileExists(string $bucket, string $url): bool
+    {
+        $urlInfo = $this->getUrlInfo($url);
+        if (!$urlInfo) {
+            return false;
         }
 
-        return $objectUrl;
+        return $this->getClient($bucket)->doesObjectExist(
+            $urlInfo['bucket'],
+            $urlInfo['key']
+        );
+    }
+
+    /**
+     * This method strips all the useful information from an S3 file URL:
+     * - type  : Can be "vHost" or "path"
+     * - bucket: The bucket name
+     * - key   : The actual object key
+     *
+     * @param string $url
+     *
+     * @return array
+     */
+    public function getUrlInfo(string $url): array
+    {
+        /**
+         * * We can receive a different number of URL styles from S3. We have 2 main
+         * * variatons:
+         *
+         * * - virtual-hosted style:
+         * *      - https://bucket.s3.amazonaws.com/path/to/object
+         * *      - https://bucket.s3-aws-region.amazonaws.com/path/to/object
+         *
+         * * - path style:
+         * *      - https://s3.amazonaws.com/bucket/path/to/object
+         * *          - This one is used specifically for the us-east-1 region
+         * *      - http://s3-aws-region.amazonaws.com/bucket/path/to/object
+         *
+         * * So, in order to make sure we're able to extract the bucket and object key
+         * * from the URL we needed two different regex expressions, one for each URL
+         * * style.
+         *
+         * ! Note: the order here is important, because the "path" style will match
+         * !       vHost as well, but the matches won't make sense here. Because of
+         * !       that, we MUST check vHost before path.
+         */
+        $regex = [
+            'vHost' => [
+                'exp' => '/(?:[https:\/\/]*)([^.]+)\.s3(.*)\.amazonaws\.com\/(.*)/',
+                'idx' => ['bucket' => 1, 'key' => 3],
+            ],
+            'path'  => [
+                'exp' => '/(?:[\S]*)\.amazonaws\.com\/([^\/]*)\/(.*)/',
+                'idx' => ['bucket' => 1, 'key' => 2],
+            ],
+        ];
+
+        foreach ($regex as $type => $info) {
+            if (preg_match($info['exp'], $url, $matches)) {
+                return [
+                    'originalUrl' => $url,
+                    'type'        => $type,
+                    'bucket'      => $matches[$info['idx']['bucket']],
+                    'key'         => $matches[$info['idx']['key']],
+                ];
+            }
+        }
+
+        return [];
     }
 
     /**
@@ -93,7 +211,7 @@ class S3 extends AwsService
      *
      * @return string
      */
-    public function getS3BucketName(string $bucketReference):string
+    public function getS3BucketName(string $bucketReference): string
     {
         return $this->getResourceConfig($bucketReference)['bucket'];
     }
@@ -106,7 +224,7 @@ class S3 extends AwsService
      *
      * @return string
      */
-    public function getS3BucketFileUrl(string $bucketReference, string $key):string
+    public function getS3BucketFileUrl(string $bucketReference, string $key): string
     {
         $bucketName = $this->getS3BucketName($bucketReference);
         return $this->getClient($bucketReference)->getObjectUrl($bucketName, $key);
