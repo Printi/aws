@@ -186,7 +186,7 @@ class S3 extends AwsService
     /**
      * Copy S3 bucket file
      *
-     * @param string $bucketName S3 Bucket Name
+     * @param string $bucket     S3 Bucket Name
      * @param string $originPath The Origin file path
      * @param string $targetPath The Target file path
      *
@@ -231,6 +231,26 @@ class S3 extends AwsService
     }
 
     /**
+     * Get Omega s3 file url key
+     *
+     * @param string $dir      The s3 directory name
+     * @param int    $itemId   The order item id
+     * @param string $fileName The file name
+     *
+     * @return string
+     * @throws S3Exception
+     */
+    public function getOmegaS3FileKey(string $dir, int $itemId, string $fileName)
+    {
+        $directories = ['original', 'preflight', 'prepress', 'production', 'preflight/previews'];
+        if (!in_array($dir, $directories)) {
+            throw new S3Exception(S3Exception::TYPE_S3_DIRECTORY_NOT_FOUND);
+        }
+
+        return sprintf('%s/%s/%s', $itemId, $dir, $fileName);
+    }
+
+    /**
      * Retrieve S3 key url from a full S3 url
      * Looks like we can have 2 kind of urls
      *      https://alpha-upload-dev.s3-sa-east-1.amazonaws.com/briefing/800301/800480/800301_800480_14072017_1344_3.pdf
@@ -244,7 +264,7 @@ class S3 extends AwsService
      *
      * @return bool|string with s3 key url
      */
-    protected function getS3KeyFromObjectUrl($objectUrl, $bucket)
+    public function getS3KeyFromObjectUrl($objectUrl, $bucket)
     {
         $pattern = "/.*" . preg_quote($bucket) . "[^\/]*\/(.*)/";
         if (preg_match($pattern, $objectUrl, $match)) {
