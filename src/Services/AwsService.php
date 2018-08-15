@@ -87,4 +87,14 @@ abstract class AwsService
 
         return $this->config[$key];
     }
+
+    /**
+     * Returns the config array for this Bundle
+     *
+     * @return array
+     */
+    protected function getConfig(): array
+    {
+        return $this->config;
+    }
 }

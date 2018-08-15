@@ -20,21 +20,52 @@ class S3 extends AwsService
      * @return string
      * @throws S3Exception
      */
-    public function signFileUrl(string $objectUrl, string $bucket, string $expiration = '+10 minutes'): string
+    public function signFileUrl(string $objectUrl, string $bucketReference, string $expiration = '+60 minutes'): string
     {
-        $bucketName = $this->getS3BucketName($bucket);
-        $cmdParams  = [
+        $bucketName = $this->getS3BucketName($bucketReference);
+        $fileInfo   = $this->getUrlInfo($objectUrl);
+
+        /**
+         * Here we actually may bypass the reference sent by the caller, because
+         * sometimes the caller doesn't (need to) know exactly where the file is
+         * in order to sign it.
+         * The file may be on alpha's bucket due to our legacy workflow, but it
+         * sometimes can be on omega's bucket as well.
+         * So, in order to know exactly in which bucket the file is, we run a
+         * double check using our getUrlInfo method.
+         */
+        if ($fileInfo['bucket'] !== $bucketName) {
+            $bucketName      = $fileInfo['bucket'];
+            $bucketReference = $this->getBucketReferenceFromBucketName($bucketName);
+        }
+
+        $cmdParams = [
             'Bucket' => $bucketName,
-            'Key'    => $this->getS3KeyFromObjectUrl(
-                $objectUrl,
-                $bucketName
-            ),
+            'Key'    => $fileInfo['key'],
         ];
 
-        $cmd     = $this->getClient($bucket)->getCommand('GetObject', $cmdParams);
-        $request = $this->getClient($bucket)->createPresignedRequest($cmd, $expiration);
+        $cmd     = $this->getClient($bucketReference)->getCommand('GetObject', $cmdParams);
+        $request = $this->getClient($bucketReference)->createPresignedRequest($cmd, $expiration);
 
         return (string) $request->getUri();
+    }
+
+    /**
+     * Returns a bucket reference from our config for a given bucketName
+     *
+     * @param string $bucketName
+     *
+     * @return string
+     */
+    public function getBucketReferenceFromBucketName(string $bucketName): string
+    {
+        foreach ($this->getConfig() as $ref => $info) {
+            if ($info['bucket'] == $bucketName) {
+                return $ref;
+            }
+        }
+
+        return $bucketName;
     }
 
     /**
