@@ -4,6 +4,7 @@ namespace Printi\AwsBundle\Services;
 
 use Aws\AwsClient;
 use Aws\Exception\AwsException;
+use OutOfRangeException;
 
 /**
  * Class AwsService
@@ -24,7 +25,7 @@ abstract class AwsService
         $this->globalConfig = $globalConfig;
         $this->config       = $config;
 
-        $path = explode('\\', get_class($this));
+        $path          = explode('\\', get_class($this));
         $this->service = array_pop($path);
     }
 
@@ -78,7 +79,7 @@ abstract class AwsService
     protected function getResourceConfig(string $key): array
     {
         if (!is_array($this->config[$key]) || empty($this->config[$key])) {
-            throw new AwsException(sprintf(
+            throw new \OutOfRangeException(sprintf(
                 "Config for [%s]:[%s] not found.",
                 $this->service,
                 $key
