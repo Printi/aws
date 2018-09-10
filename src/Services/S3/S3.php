@@ -24,6 +24,7 @@ class S3 extends AwsService
     {
         $bucketName = $this->getS3BucketName($bucketReference);
         $fileInfo   = $this->getUrlInfo($objectUrl);
+        $region     = null;
 
         /**
          * Here we actually may bypass the reference sent by the caller, because
@@ -36,16 +37,15 @@ class S3 extends AwsService
          */
         if ($fileInfo['bucket'] !== $bucketName) {
             $bucketName      = $fileInfo['bucket'];
+            $region          = $fileInfo['region'];
             $bucketReference = $this->getBucketReferenceFromBucketName($bucketName);
         }
 
-        $cmdParams = [
-            'Bucket' => $bucketName,
-            'Key'    => $fileInfo['key'],
-        ];
+        $cmdParams = ['Bucket' => $bucketName, 'Key' => $fileInfo['key']];
 
-        $cmd     = $this->getClient($bucketReference)->getCommand('GetObject', $cmdParams);
-        $request = $this->getClient($bucketReference)->createPresignedRequest($cmd, $expiration);
+        $client  = $this->getClient($bucketReference, $region);
+        $cmd     = $client->getCommand('GetObject', $cmdParams);
+        $request = $client->createPresignedRequest($cmd, $expiration);
 
         return (string) $request->getUri();
     }
@@ -192,26 +192,35 @@ class S3 extends AwsService
         $regex = [
             'vHost' => [
                 'exp' => '/(?:[https:\/\/]*)([^.]+)\.s3(.*)\.amazonaws\.com\/(.*)/',
-                'idx' => ['bucket' => 1, 'key' => 3],
+                'idx' => ['bucket' => 1, 'region' => 2, 'key' => 3],
             ],
             'path'  => [
-                'exp' => '/(?:[\S]*)\.amazonaws\.com\/([^\/]*)\/(.*)/',
-                'idx' => ['bucket' => 1, 'key' => 2],
+                'exp' => '/s3(?:\-*)(.*)\.amazonaws\.com\/([^\/]*)\/(.*)/',
+                'idx' => ['region' => 1, 'bucket' => 2, 'key' => 3],
             ],
         ];
 
+        $url = str_replace('\/', '/', $url);
+
         foreach ($regex as $type => $info) {
             if (preg_match($info['exp'], $url, $matches)) {
-                return [
+                $info = [
                     'originalUrl' => $url,
                     'type'        => $type,
+                    'region'      => str_replace('.', '', $matches[$info['idx']['region']]),
                     'bucket'      => $matches[$info['idx']['bucket']],
                     'key'         => $matches[$info['idx']['key']],
                 ];
+
+                if (!$info['region']) {
+                    $info['region'] = $this->getGlobalConfig()['region'];
+                }
+
+                return $info;
             }
         }
 
-        return [];
+        throw new S3Exception(S3Exception::TYPE_COULD_NOT_GET_INFO_FROM_FILE_URL);
     }
 
     /**
