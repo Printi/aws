@@ -31,12 +31,14 @@ class Lambda extends AwsService
         try {
             $config = [
                 'FunctionName'   => $lambdaConfig['function_name'],
-                'InvocationType' => 'Event',    // for asynchronous lambda call
+                'InvocationType' => 'Event', // for asynchronous lambda call
                 'Payload'        => json_encode($payload),
             ];
-
-            $result = $this->getClient($lambdaReference)->invoke($config);
+            $client = $this->getClient($lambdaReference);
+            $result = $client->invoke($config);
         } catch (\Exception $e) {
+            var_dump($e);
+            die;
             throw new LambdaException(LambdaException::TYPE_LAMBDA_INVOKE_FAILED);
         }
 
@@ -57,11 +59,11 @@ class Lambda extends AwsService
     public function downloadFileToS3(string $downloadFileUrl, string $bucket, string $key, array $callback = [])
     {
         $payload = [
-            'file'     => $downloadFileUrl,
-            'target'   => [
+            'file'   => $downloadFileUrl,
+            'target' => [
                 'bucket' => $bucket,
-                'key'    => $key
-            ]
+                'key'    => $key,
+            ],
         ];
 
         if (!empty($callback)) {

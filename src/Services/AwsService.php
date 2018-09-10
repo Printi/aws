@@ -50,9 +50,13 @@ abstract class AwsService
             $this->service
         );
 
+        $region = $providedRegion ?? $this->globalConfig['region'];
+
         try {
             $resource = $this->getResourceConfig($key);
-            $region   = $resource['region'];
+            if (isset($resource['region'])) {
+                $region = $resource['region'];
+            }
         } catch (\OutOfRangeException $e) {
             if (null === $providedRegion) {
                 throw $e;
