@@ -245,6 +245,29 @@ class S3 extends AwsService
     }
 
     /**
+     * Put|Create file on s3 server
+     *
+     * @param string $bucket
+     * @param string $key
+     * @param string $content
+     * @param string $contentType
+     *
+     * @return string
+     */
+    public function putFile(string $bucket, string $key, string $content, string $contentType)
+    {
+        $bucketName = $this->getS3BucketName($bucket);
+        $response = $this->getClient($bucket)->putObject([
+            'Bucket' => $bucketName,
+            'Key'    => $key,
+            'Body'   => $content,
+            'ContentType' => $contentType
+        ]);
+
+        return $response['ObjectURL'] ?? '';
+    }
+
+    /**
      * Get s3 bucket name by reference
      *
      * @param string $bucketReference
@@ -282,7 +305,7 @@ class S3 extends AwsService
      */
     public function getOmegaS3FileKey(string $dir, int $itemId, string $fileName)
     {
-        $directories = ['original', 'preflight', 'prepress', 'production', 'preflight/previews'];
+        $directories = ['original', 'preflight', 'prepress', 'production', 'preflight/previews', 'preflight/filePrep'];
         if (!in_array($dir, $directories)) {
             throw new S3Exception(S3Exception::TYPE_S3_DIRECTORY_NOT_FOUND);
         }
