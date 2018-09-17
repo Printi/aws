@@ -305,7 +305,7 @@ class S3 extends AwsService
      */
     public function getOmegaS3FileKey(string $dir, int $itemId, string $fileName)
     {
-        $directories = ['original', 'preflight', 'prepress', 'production', 'preflight/previews', 'preflight/filePrep'];
+        $directories = ['original', 'preflight', 'prepress', 'production', 'preflight/previews'];
         if (!in_array($dir, $directories)) {
             throw new S3Exception(S3Exception::TYPE_S3_DIRECTORY_NOT_FOUND);
         }
