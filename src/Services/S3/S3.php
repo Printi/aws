@@ -16,11 +16,15 @@ class S3 extends AwsService
      * @param string $objectUrl      Download file url
      * @param string $bucket         The Bucket config key
      * @param string $expiration     Expiration time
+     * @param array  $extraCmdParams Extra params for generating an Aws Command,
+     *                               that can be used, for example, for setting
+     *                               header overrides, such as "ResponseContentDisposition".
      *
      * @return string
+     *
      * @throws S3Exception
      */
-    public function signFileUrl(string $objectUrl, string $bucketReference, string $expiration = '+60 minutes'): string
+    public function signFileUrl(string $objectUrl, string $bucketReference, string $expiration = '+60 minutes', array $extraCmdParams = []): string
     {
         $bucketName = $this->getS3BucketName($bucketReference);
         $fileInfo   = $this->getUrlInfo($objectUrl);
@@ -41,13 +45,32 @@ class S3 extends AwsService
             $bucketReference = $this->getBucketReferenceFromBucketName($bucketName);
         }
 
+        $client    = $this->getClient($bucketReference, $region);
         $cmdParams = ['Bucket' => $bucketName, 'Key' => $fileInfo['key']];
-
-        $client  = $this->getClient($bucketReference, $region);
+        if (!empty($extraCmdParams)) {
+            $cmdParams = array_merge($cmdParams, $extraCmdParams);
+        }
         $cmd     = $client->getCommand('GetObject', $cmdParams);
         $request = $client->createPresignedRequest($cmd, $expiration);
 
         return (string) $request->getUri();
+    }
+
+    /**
+     * Signs a file URL and makes it ready for download overriding the
+     * "content-disposition" header on the response.
+     *
+     * @param string $objectUrl      Download file url
+     * @param string $bucket         The Bucket config key
+     * @param string $expiration     Expiration time
+     *
+     * @return string                The downloadable file URL
+     */
+    public function signFileUrlForDownload(string $objectUrl, string $bucketReference, string $expiration = '+60 minutes'): string
+    {
+        $extraCmdParams = ['ResponseContentDisposition' => 'attachment'];
+
+        return $this->signFileUrl($objectUrl, $bucketReference, $expiration, $extraCmdParams);
     }
 
     /**
@@ -257,11 +280,11 @@ class S3 extends AwsService
     public function putFile(string $bucket, string $key, string $content, string $contentType)
     {
         $bucketName = $this->getS3BucketName($bucket);
-        $response = $this->getClient($bucket)->putObject([
-            'Bucket' => $bucketName,
-            'Key'    => $key,
-            'Body'   => $content,
-            'ContentType' => $contentType
+        $response   = $this->getClient($bucket)->putObject([
+            'Bucket'      => $bucketName,
+            'Key'         => $key,
+            'Body'        => $content,
+            'ContentType' => $contentType,
         ]);
 
         return $response['ObjectURL'] ?? '';
